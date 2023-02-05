@@ -9,36 +9,29 @@ mod proxy {
     #[ink(storage)]
     pub struct Proxy {
         /// Stores a single `bool` value on the storage.
-        value: bool,
+        admin: AccountId,
+        implementation: AccountId,
     }
 
     impl Proxy {
-        /// Constructor that initializes the `bool` value to the given `init_value`.
         #[ink(constructor)]
-        pub fn new(init_value: bool) -> Self {
-            Self { value: init_value }
+        pub fn new(admin: AccountId, implementation: AccountId) -> Self {
+            Self { admin, implementation }
         }
 
-        /// Constructor that initializes the `bool` value to `false`.
-        ///
-        /// Constructors can delegate to other constructors.
-        #[ink(constructor)]
-        pub fn default() -> Self {
-            Self::new(Default::default())
-        }
-
-        /// A message that can be called on instantiated contracts.
-        /// This one flips the value of the stored `bool` from `true`
-        /// to `false` and vice versa.
         #[ink(message)]
-        pub fn flip(&mut self) {
-            self.value = !self.value;
+        pub fn admin(&self) -> AccountId {
+            self.admin
         }
 
-        /// Simply returns the current value of our `bool`.
         #[ink(message)]
-        pub fn get(&self) -> bool {
-            self.value
+        pub fn implementation(&self) -> AccountId {
+            self.implementation
+        }
+
+        #[ink(message, selector = _)]
+        pub fn fallback(&mut self) {
+            todo!()
         }
     }
 
@@ -47,23 +40,12 @@ mod proxy {
     /// The below code is technically just normal Rust code.
     #[cfg(test)]
     mod tests {
-        /// Imports all the definitions from the outer scope so we can use them here.
-        use super::*;
+        // /// Imports all the definitions from the outer scope so we can use them here.
+        // use super::*;
 
-        /// We test if the default constructor does its job.
-        #[ink::test]
-        fn default_works() {
-            let proxy = Proxy::default();
-            assert_eq!(proxy.get(), false);
-        }
-
-        /// We test a simple use case of our contract.
-        #[ink::test]
-        fn it_works() {
-            let mut proxy = Proxy::new(false);
-            assert_eq!(proxy.get(), false);
-            proxy.flip();
-            assert_eq!(proxy.get(), true);
-        }
+        // #[ink::test]
+        // fn _it_works() {
+        //     todo!()
+        // }
     }
 }
