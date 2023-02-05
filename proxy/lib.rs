@@ -3,12 +3,8 @@
 #[ink::contract]
 mod proxy {
 
-    /// Defines the storage of your contract.
-    /// Add new fields to the below struct in order
-    /// to add new static storage fields to your contract.
     #[ink(storage)]
     pub struct Proxy {
-        /// Stores a single `bool` value on the storage.
         admin: AccountId,
         implementation: AccountId,
     }
@@ -16,7 +12,10 @@ mod proxy {
     impl Proxy {
         #[ink(constructor)]
         pub fn new(admin: AccountId, implementation: AccountId) -> Self {
-            Self { admin, implementation }
+            Self {
+                admin,
+                implementation,
+            }
         }
 
         #[ink(message)]
@@ -31,21 +30,19 @@ mod proxy {
 
         #[ink(message, selector = _)]
         pub fn fallback(&mut self) {
-            todo!()
+            use ink::env::call::{build_call, ExecutionInput, Selector};
+            use ink::env::DefaultEnvironment;
+
+            let code_hash = self.env().code_hash(&self.implementation).unwrap();
+            let admin_id: AccountId = build_call::<DefaultEnvironment>()
+                .delegate(code_hash)
+                .exec_input(ExecutionInput::new(Selector::new(ink::selector_bytes!(
+                    "update_admin"
+                ))))
+                .returns::<AccountId>()
+                .invoke();
+
+            ink::env::debug_println!("Proxy {:?}", admin_id);
         }
-    }
-
-    /// Unit tests in Rust are normally defined within such a `#[cfg(test)]`
-    /// module and test functions are marked with a `#[test]` attribute.
-    /// The below code is technically just normal Rust code.
-    #[cfg(test)]
-    mod tests {
-        // /// Imports all the definitions from the outer scope so we can use them here.
-        // use super::*;
-
-        // #[ink::test]
-        // fn _it_works() {
-        //     todo!()
-        // }
     }
 }

@@ -11,24 +11,25 @@ mod logic {
     impl Logic {
         #[ink(constructor)]
         pub fn new() -> Self {
-            Self { admin: AccountId::from([0x00; 32]) }
+            Self {
+                admin: AccountId::from([0x00; 32]),
+            }
         }
 
         #[ink(message)]
         pub fn admin(&self) -> AccountId {
-            self.admin
+            let admin = self.admin;
+            ink::env::debug_println!("Logic {:?}", &admin);
+            admin
         }
-    }
 
-    #[cfg(test)]
-    mod tests {
-        // /// Imports all the definitions from the outer scope so we can use them here.
-        // use super::*;
-
-        // /// We test a simple use case of our contract.
-        // #[ink::test]
-        // fn it_works() {
-        //     todo!()
-        // }
+        #[ink(message)]
+        pub fn update_admin(&mut self) -> AccountId {
+            let new_admin = AccountId::from([0x01; 32]);
+            self.admin = new_admin;
+            let admin = self.admin;
+            ink::env::debug_println!("Logic {:?}", &admin);
+            admin
+        }
     }
 }
