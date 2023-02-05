@@ -2,19 +2,18 @@
 
 #[ink::contract]
 mod proxy {
-    use ink::storage::traits::ManualKey;
     use ink::storage::Lazy;
 
     #[ink(storage)]
     pub struct Proxy {
-        admin: Lazy<AccountId, ManualKey<123>>,
+        admin: Lazy<AccountId>,
         implementation: AccountId,
     }
 
     impl Proxy {
         #[ink(constructor)]
         pub fn new(admin: AccountId, implementation: AccountId) -> Self {
-            let mut lazy = Lazy::new();
+            let mut lazy = Lazy::default();
             lazy.set(&admin);
             Self {
                 admin: lazy,

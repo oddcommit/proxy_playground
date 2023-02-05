@@ -2,15 +2,14 @@
 
 #[ink::contract]
 mod logic {
-    use ink::storage::traits::ManualKey;
     use ink::storage::Lazy;
 
     #[ink(storage)]
-    pub struct Logic {
-        admin: Lazy<AccountId, ManualKey<123>>,
+    pub struct Proxy {
+        admin: Lazy<AccountId>,
     }
 
-    impl Logic {
+    impl Proxy {
         #[ink(constructor)]
         pub fn new() -> Self {
             let mut lazy = Lazy::default();
