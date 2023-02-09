@@ -30,7 +30,7 @@ cargo contract call --contract $PROXY_ADDRESS \
 
 sleep 1
 
-cargo contract call --contract $LOGIC_ADDRESS \
+cargo contract call --contract $PROXY_ADDRESS \
     --message flip -s //Bob \
     target/ink/logic/metadata.json --skip-confirm
 
