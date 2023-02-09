@@ -2,35 +2,45 @@
 
 #[ink::contract]
 mod logic {
+    use ink::storage::traits::ManualKey;
     use ink::storage::Lazy;
 
+    const VALUE_OFFSET: u32 = 1337;
+
     #[ink(storage)]
-    pub struct Proxy {
-        admin: Lazy<AccountId>,
+    pub struct Logic {
+        admin: AccountId,
+        value: Lazy<bool, ManualKey<VALUE_OFFSET>>,
     }
 
-    impl Proxy {
+    impl Logic {
         #[ink(constructor)]
         pub fn new() -> Self {
-            let mut lazy = Lazy::default();
-            lazy.set(&AccountId::from([0x00; 32]));
-            Self { admin: lazy }
+            let mut value = Lazy::default();
+            value.set(&false);
+
+            Self {
+                admin: AccountId::from([0x00; 32]),
+                value,
+            }
         }
 
-        #[ink(message)]
+        #[ink(message, selector = 1)]
         pub fn admin(&self) -> AccountId {
-            let admin = self.admin.get().unwrap();
+            let admin = self.admin;
             ink::env::debug_println!("Logic {:?}", &admin);
             admin
         }
 
         #[ink(message)]
-        pub fn update_admin(&mut self) -> AccountId {
-            let new_admin = AccountId::from([0x01; 32]);
-            self.admin.set(&new_admin);
-            let admin = self.admin.get().unwrap();
-            ink::env::debug_println!("Logic {:?}", &admin);
-            admin
+        pub fn flip(&mut self) {
+            let value = self.value.get().unwrap();
+            self.value.set(&!value)
+        }
+
+        #[ink(message)]
+        pub fn get(&self) -> bool {
+            self.value.get().unwrap()
         }
     }
 }
