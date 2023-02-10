@@ -33,4 +33,4 @@ sleep 1
 
 cargo contract call --contract $PROXY_ADDRESS \
     --message get -s //Bob \
-    target/ink/logic/metadata.json --dry-run --skip-confirm
+    target/ink/logic/metadata.json --skip-confirm
