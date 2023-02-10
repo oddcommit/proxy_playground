@@ -7,3 +7,6 @@
 # Remove Cargo.lock when creating an executable, leave it for libraries
 # More information here http://doc.crates.io/guide.html#cargotoml-vs-cargolock
 Cargo.lock
+
+# I want to keep some expanded contracts around but not check them in
+expanded/
