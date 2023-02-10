@@ -8,7 +8,6 @@ PROXY_ADDRESS=""
 cargo contract build --manifest-path logic/Cargo.toml
 cargo contract build --manifest-path proxy/Cargo.toml
 
-
 LOGIC_ADDRESS=$(cargo contract instantiate --constructor new \
     --suri //Alice --salt $(date +%s) \
     --manifest-path logic/Cargo.toml \
@@ -24,18 +23,14 @@ PROXY_ADDRESS=$(cargo contract instantiate --constructor new \
 
 echo "Proxy Address: $PROXY_ADDRESS"
 
-cargo contract call --contract $PROXY_ADDRESS \
-    --message get -s //Alice \
-    target/ink/proxy/metadata.json --dry-run --skip-confirm
-
 sleep 1
 
 cargo contract call --contract $PROXY_ADDRESS \
-    --message flip -s //Bob \
+    --message set --args true -s //Bob \
     target/ink/logic/metadata.json --skip-confirm
 
 sleep 1
 
 cargo contract call --contract $PROXY_ADDRESS \
-    --message get -s //Alice \
-    target/ink/proxy/metadata.json --dry-run --skip-confirm
+    --message get -s //Bob \
+    target/ink/logic/metadata.json --dry-run --skip-confirm
