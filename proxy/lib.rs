@@ -63,7 +63,10 @@ mod proxy {
         /// 2. The `&mut self` signature
         ///
         /// We need (1) in order to ensure that the `Logic` contract returns control to the
-        /// `Proxy`. This allows the storage write to happen in the context of the `Proxy`.
+        /// `Proxy`. This allows the `Proxy` contract to be the last to commit to storage. If we
+        /// don't do this then the `Logic` contract (which has a different and possibly conflicting
+        /// storage layout) will be last to commit, rendering the `Proxy` contract's storage
+        /// useless.
         ///
         /// It follows that in order for us to write to storage that we have a mutable reference to
         /// the `Proxy` storage, which is why we require `&mut self` in the function signature.
