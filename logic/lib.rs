@@ -7,12 +7,16 @@ mod logic {
 
     #[ink(storage)]
     pub struct Logic {
-        /// This ends up getting overwritten by the `Proxy` contract when control is returned at the
-        /// end of the call.
+        /// Note that we make use of the `Lazy` data structure here to ensure that the `admin`
+        /// field gets stored in its own storage cell.
         ///
-        /// This is because the `Proxy` also stores `Packed` values starting at the  `0x00000000`
-        /// storage cell.
-        admin: AccountId,
+        /// If we don't do this it ends up getting stored at the `0x00000000` storage key where all
+        /// the other `Packed` fields get stored.
+        ///
+        /// This is problematic because our `Proxy` contract is also writing its `Packed` fields
+        /// to `0x00000000`. When we return control to the `Proxy` at the end of the call it'll end
+        /// up overwriting our fields at `0x00000000` with its own!
+        admin: Lazy<AccountId>,
         value: Lazy<bool>,
     }
 
@@ -28,7 +32,7 @@ mod logic {
         #[ink(constructor)]
         pub fn new() -> Self {
             Self {
-                admin: AccountId::from([0x00; 32]),
+                admin: Lazy::default(),
                 value: Default::default(),
             }
         }
@@ -57,7 +61,7 @@ mod logic {
             let key = self.admin.key();
             ink::env::debug_println!("Logic::get_admin: Key {:?}", &key);
 
-            let value = self.admin;
+            let value = self.admin.get().unwrap();
             ink::env::debug_println!("Logic::get_admin: {:?}", &value);
             value
         }
@@ -67,8 +71,8 @@ mod logic {
             let key = self.admin.key();
             ink::env::debug_println!("Logic::set_admin: Key {:?}", &key);
 
-            self.admin = new_admin;
-            ink::env::debug_println!("Logic::set_admin: {:?}", &self.admin);
+            self.admin.set(&new_admin);
+            ink::env::debug_println!("Logic::set_admin: {:?}", &self.admin.get());
         }
     }
 }
