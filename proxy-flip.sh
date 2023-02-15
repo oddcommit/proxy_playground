@@ -34,3 +34,15 @@ sleep 1
 cargo contract call --contract $PROXY_ADDRESS \
     --message get -s //Bob \
     target/ink/logic/metadata.json --skip-confirm
+
+# Note: If you want to play around with the `admin` overwriting stuff, uncomment this.
+#
+# cargo contract call --contract $PROXY_ADDRESS \
+#     --message set_admin --args 5E7kXs2CJxDEKaqZ9ckB9KHDwUY8LMjPFjhu7VDzpw7ND5iS -s //Bob \
+#     target/ink/logic/metadata.json --skip-confirm
+# 
+# sleep 1
+# 
+# cargo contract call --contract $PROXY_ADDRESS \
+#     --message get_admin -s //Bob \
+#     target/ink/logic/metadata.json --skip-confirm
