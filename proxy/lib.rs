@@ -53,8 +53,22 @@ mod proxy {
             Ok(self.implementation = new_code)
         }
 
+        /// Forwards any call which doesn't match a message in the contract.
+        ///
+        /// # Note
+        ///
+        /// There are two key things which are required for this to work correctly.
+        ///
+        /// 1. set_tail_call(false)
+        /// 2. The `&mut self` signature
+        ///
+        /// We need (1) in order to ensure that the `Logic` contract returns control to the
+        /// `Proxy`. This allows the storage write to happen in the context of the `Proxy`.
+        ///
+        /// It follows that in order for us to write to storage that we have a mutable reference to
+        /// the `Proxy` storage, which is why we require `&mut self` in the function signature.
         #[ink(message, selector = _)]
-        pub fn fallback(&self) {
+        pub fn fallback(&mut self) {
             use ink::env::call::build_call;
             use ink::env::DefaultEnvironment;
 
@@ -66,7 +80,7 @@ mod proxy {
                 .call_flags(
                     ink::env::CallFlags::default()
                         .set_forward_input(true)
-                        .set_tail_call(true),
+                        .set_tail_call(false),
                 )
                 .invoke();
         }
