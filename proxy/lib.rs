@@ -16,14 +16,14 @@ mod proxy {
         implementation: AccountId,
     }
 
-    // The Proxy error type.
+    /// The Proxy error type.
     #[derive(Debug, PartialEq, Eq, scale::Encode, scale::Decode)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
     pub enum Error {
         UnauthorizedCaller,
     }
 
-    // The Proxy Result type.
+    /// The Proxy Result type.
     pub type Result<T> = core::result::Result<T, Error>;
 
     impl Proxy {
