@@ -10,17 +10,38 @@ macro_rules! ensure {
 
 #[ink::contract]
 mod proxy {
+
     #[ink(storage)]
     pub struct Proxy {
         admin: AccountId,
         implementation: AccountId,
+        value: u32,
+    }
+
+    /// Distinguishes whether the return type comes from the `Proxy` contract or the `Logic`
+    /// contract.
+    ///
+    /// This is needed since we cannot get the actual return type for any message from the `Logic`
+    /// contract, but may still return from it.
+    #[derive(Debug, PartialEq, Eq, scale::Encode, scale::Decode)]
+    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
+    pub enum ProxyOrLogic<T> {
+        /// The value returned by the `Proxy` contract message.
+        Proxy(T),
+        /// The message returned a value from the `Logic` contract. However, we do not know what
+        /// this value actually was.
+        Logic,
     }
 
     /// The Proxy error type.
     #[derive(Debug, PartialEq, Eq, scale::Encode, scale::Decode)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
     pub enum Error {
-        UnauthorizedCaller,
+        /// The `Proxy` admin attempted to proxy a call to the `Logic` contract.
+        ///
+        /// In the Transparent Proxy pattern the `Proxy` admin is not allowed to proxy any calls to
+        /// the `Logic` contract.
+        AdminAttemptedToProxy,
     }
 
     /// The Proxy Result type.
@@ -32,25 +53,78 @@ mod proxy {
             Self {
                 admin,
                 implementation,
+                value: Default::default(),
             }
         }
 
         #[ink(message)]
-        pub fn admin(&self) -> AccountId {
-            self.admin
-        }
-
-        #[ink(message)]
-        pub fn implementation(&self) -> AccountId {
-            self.implementation
-        }
-
-        #[ink(message)]
-        pub fn upgrade_to(&mut self, new_code: AccountId) -> Result<()> {
+        pub fn admin(&mut self) -> ProxyOrLogic<AccountId> {
             let caller = self.env().caller();
-            ensure!(caller == self.admin, Error::UnauthorizedCaller);
+            if caller != self.admin {
+                self.fallback()
+                    .expect("Checked for a non-admin user before calling `fallback`.");
+                ProxyOrLogic::Logic
+            } else {
+                ProxyOrLogic::Proxy(self.admin)
+            }
+        }
 
-            Ok(self.implementation = new_code)
+        #[ink(message)]
+        pub fn implementation(&mut self) -> ProxyOrLogic<AccountId> {
+            let caller = self.env().caller();
+            if caller != self.admin {
+                self.fallback()
+                    .expect("Checked for a non-admin user before calling `fallback`.");
+                ProxyOrLogic::Logic
+            } else {
+                ProxyOrLogic::Proxy(self.implementation)
+            }
+        }
+
+        #[ink(message)]
+        pub fn upgrade_to(&mut self, new_code: AccountId) {
+            let caller = self.env().caller();
+            if caller != self.admin {
+                self.fallback()
+                    .expect("Checked for a non-admin user before calling `fallback`.");
+            } else {
+                self.implementation = new_code
+            }
+        }
+
+        #[ink(message)]
+        pub fn get(&mut self) -> ProxyOrLogic<u32> {
+            let caller = self.env().caller();
+            if caller != self.admin {
+                self.fallback()
+                    .expect("Checked for a non-admin user before calling `fallback`.");
+                ProxyOrLogic::Logic
+            } else {
+                use ink::storage::traits::StorageKey;
+                let key = self.value.key();
+                ink::env::debug_println!("Proxy::get: Key {:?}", &key);
+
+                let value = self.value;
+                ink::env::debug_println!("Proxy::get: {:?}", &value);
+
+                ProxyOrLogic::Proxy(value)
+            }
+        }
+
+        #[ink(message)]
+        pub fn set(&mut self, value: u32) {
+            let caller = self.env().caller();
+            if caller != self.admin {
+                self.fallback()
+                    .expect("Checked for a non-admin user before calling `fallback`.")
+            } else {
+                use ink::storage::traits::StorageKey;
+                let key = self.value.key();
+                ink::env::debug_println!("Proxy::set: Key {:?}", &key);
+
+                self.value = value;
+                ink::env::debug_println!("Proxy::set: {:?}", &self.value);
+            }
         }
 
         /// Forwards any call which doesn't match a message in the contract.
@@ -71,9 +145,15 @@ mod proxy {
         /// It follows that in order for us to write to storage that we have a mutable reference to
         /// the `Proxy` storage, which is why we require `&mut self` in the function signature.
         #[ink(message, selector = _)]
-        pub fn fallback(&mut self) {
-            use ink::env::call::build_call;
-            use ink::env::DefaultEnvironment;
+        pub fn fallback(&mut self) -> Result<()> {
+            use ink::env::{call::build_call, DefaultEnvironment};
+
+            // As part of the Transparent Proxy pattern we don't allow the `Proxy` admin to proxy
+            // any messages to the `Logic` contract.
+            ensure!(
+                self.env().caller() != self.admin,
+                Error::AdminAttemptedToProxy,
+            );
 
             ink::env::debug_println!("Proxying Call");
 
@@ -86,6 +166,8 @@ mod proxy {
                         .set_tail_call(false),
                 )
                 .invoke();
+
+            Ok(())
         }
     }
 }

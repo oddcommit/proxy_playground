@@ -17,7 +17,7 @@ mod logic {
         /// to `0x00000000`. When we return control to the `Proxy` at the end of the call it'll end
         /// up overwriting our fields at `0x00000000` with its own!
         admin: Lazy<AccountId>,
-        value: Lazy<bool>,
+        value: Lazy<u32>,
     }
 
     impl Logic {
@@ -38,7 +38,7 @@ mod logic {
         }
 
         #[ink(message)]
-        pub fn get(&self) -> bool {
+        pub fn get(&self) -> u32 {
             let key = self.value.key();
             ink::env::debug_println!("Logic::get: Key {:?}", &key);
 
@@ -48,12 +48,22 @@ mod logic {
         }
 
         #[ink(message)]
-        pub fn set(&mut self, value: bool) {
+        pub fn set(&mut self, value: u32) {
             let key = self.value.key();
             ink::env::debug_println!("Logic::set: Key {:?}", &key);
 
             self.value.set(&value);
             ink::env::debug_println!("Logic::set: {:?}", &self.value.get());
+        }
+
+        #[ink(message)]
+        pub fn inc(&mut self) {
+            let key = self.value.key();
+            ink::env::debug_println!("Logic::inc: Key {:?}", &key);
+
+            let value = self.value.get().unwrap();
+            self.value.set(&(value + 1));
+            ink::env::debug_println!("Logic::inc: {:?}", &self.value.get());
         }
 
         #[ink(message)]

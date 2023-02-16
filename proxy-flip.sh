@@ -25,24 +25,40 @@ echo "Proxy Address: $PROXY_ADDRESS"
 
 sleep 1
 
+# These next couple of messages should be executed by the `Proxy` contract since the
+# admin, `Alice`, is sending the messages.
 cargo contract call --contract $PROXY_ADDRESS \
-    --message set --args true -s //Bob \
-    target/ink/logic/metadata.json --skip-confirm
+    --message set --args 12 -s //Alice \
+    target/ink/proxy/proxy.json --skip-confirm
+
+sleep 1
+
+cargo contract call --contract $PROXY_ADDRESS \
+    --message get -s //Alice \
+    target/ink/proxy/proxy.json --skip-confirm
+
+sleep 1
+
+# These next couple of messages should be executed by the `Logic` contract since a
+# non-admin, `Bob`, is sending the messages.
+cargo contract call --contract $PROXY_ADDRESS \
+    --message set --args 34 -s //Bob \
+    target/ink/logic/logic.json --skip-confirm
 
 sleep 1
 
 cargo contract call --contract $PROXY_ADDRESS \
     --message get -s //Bob \
-    target/ink/logic/metadata.json --skip-confirm
+    target/ink/logic/logic.json --skip-confirm
 
 # Note: If you want to play around with the `admin` overwriting stuff, uncomment this.
 #
 # cargo contract call --contract $PROXY_ADDRESS \
 #     --message set_admin --args 5E7kXs2CJxDEKaqZ9ckB9KHDwUY8LMjPFjhu7VDzpw7ND5iS -s //Bob \
-#     target/ink/logic/metadata.json --skip-confirm
+#     target/ink/logic/logic.json --skip-confirm
 # 
 # sleep 1
 # 
 # cargo contract call --contract $PROXY_ADDRESS \
 #     --message get_admin -s //Bob \
-#     target/ink/logic/metadata.json --skip-confirm
+#     target/ink/logic/logic.json --skip-confirm
