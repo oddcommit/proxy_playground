@@ -47,6 +47,8 @@ mod proxy {
     /// The Proxy Result type.
     pub type Result<T> = core::result::Result<T, Error>;
 
+    const FALLBACK_ERR_MSG: &str = "Checked for a non-admin user before calling `fallback`.";
+
     impl Proxy {
         #[ink(constructor)]
         pub fn new(admin: AccountId, implementation: AccountId) -> Self {
@@ -61,8 +63,7 @@ mod proxy {
         pub fn admin(&mut self) -> ProxyOrLogic<AccountId> {
             let caller = self.env().caller();
             if caller != self.admin {
-                self.fallback()
-                    .expect("Checked for a non-admin user before calling `fallback`.");
+                self.fallback().expect(FALLBACK_ERR_MSG);
                 ProxyOrLogic::Logic
             } else {
                 ProxyOrLogic::Proxy(self.admin)
@@ -73,8 +74,7 @@ mod proxy {
         pub fn implementation(&mut self) -> ProxyOrLogic<AccountId> {
             let caller = self.env().caller();
             if caller != self.admin {
-                self.fallback()
-                    .expect("Checked for a non-admin user before calling `fallback`.");
+                self.fallback().expect(FALLBACK_ERR_MSG);
                 ProxyOrLogic::Logic
             } else {
                 ProxyOrLogic::Proxy(self.implementation)
@@ -85,8 +85,7 @@ mod proxy {
         pub fn upgrade_to(&mut self, new_code: AccountId) {
             let caller = self.env().caller();
             if caller != self.admin {
-                self.fallback()
-                    .expect("Checked for a non-admin user before calling `fallback`.");
+                self.fallback().expect(FALLBACK_ERR_MSG);
             } else {
                 self.implementation = new_code
             }
@@ -96,8 +95,7 @@ mod proxy {
         pub fn get(&mut self) -> ProxyOrLogic<u32> {
             let caller = self.env().caller();
             if caller != self.admin {
-                self.fallback()
-                    .expect("Checked for a non-admin user before calling `fallback`.");
+                self.fallback().expect(FALLBACK_ERR_MSG);
                 ProxyOrLogic::Logic
             } else {
                 use ink::storage::traits::StorageKey;
@@ -115,8 +113,7 @@ mod proxy {
         pub fn set(&mut self, value: u32) {
             let caller = self.env().caller();
             if caller != self.admin {
-                self.fallback()
-                    .expect("Checked for a non-admin user before calling `fallback`.")
+                self.fallback().expect(FALLBACK_ERR_MSG);
             } else {
                 use ink::storage::traits::StorageKey;
                 let key = self.value.key();
